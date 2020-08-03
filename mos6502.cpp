@@ -335,12 +335,6 @@ void CPU::execute() noexcept
         // count down clocks
         // while(temp_clocks --> 0);
     }
-    else
-    {
-        std::cerr << "MOS WRONG OPCODE: "     
-                  << opcode->instruction_name << " " 
-                  << opcode->address_name     << std::endl;
-    }
 }
 
 void CPU::IRQ() noexcept
