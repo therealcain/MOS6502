@@ -5,7 +5,7 @@
 #include <iostream>
 
 #if __cplusplus >= 201703L
-#   define MOS_UNUSED   MOS_UNUSED
+#   define MOS_UNUSED   [[maybe_unused]]
 #else
 #   if defined(__GNUC__) || defined(__clang__)
 #       define MOS_UNUSED    __attribute__((gnu::unused))
