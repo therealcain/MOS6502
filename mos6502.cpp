@@ -1,18 +1,8 @@
-#include "cpu.hpp"
+#include "mos6502.hpp"
 
 #include <bitset>
 #include <algorithm>
 #include <iostream>
-
-#if __cplusplus >= 201703L
-#   define MOS_UNUSED   [[maybe_unused]]
-#else
-#   if defined(__GNUC__) || defined(__clang__)
-#       define MOS_UNUSED    __attribute__((gnu::unused))
-#   else
-#       define MOS_UNUSED
-#   endif
-#endif
 
 #define MOS_EXECUTE_CLASS_FUNCTION_POINTER(func)         (this->*func)()
 #define MOS_EXECUTE_CLASS_FUNCTION_POINTER(func, param)  (this->*func)(param)
@@ -37,28 +27,28 @@ public:
         NEGATIVE  = (1 << 7)  // 0x80
     };
 
-    MOS_NODISCARD
+    NODISCARD
     constexpr bool get_carry()     const { return bits[0]; }
 
-    MOS_NODISCARD
+    NODISCARD
     constexpr bool get_zero()      const { return bits[1]; }
 
-    MOS_NODISCARD
+    NODISCARD
     constexpr bool get_interrupt() const { return bits[2]; }
 
-    MOS_NODISCARD
+    NODISCARD
     constexpr bool get_decimal()   const { return bits[3]; }
 
-    MOS_NODISCARD
+    NODISCARD
     constexpr bool get_break()     const { return bits[4]; }
 
-    MOS_NODISCARD
+    NODISCARD
     constexpr bool get_unused()    const { return bits[5]; }
 
-    MOS_NODISCARD
+    NODISCARD
     constexpr bool get_overflow()  const { return bits[6]; }
 
-    MOS_NODISCARD
+    NODISCARD
     constexpr bool get_negative()  const { return bits[7]; } 
 
     inline void set_carry(bool turn)     { bits[0] = turn; }
@@ -70,7 +60,7 @@ public:
     inline void set_overflow(bool turn)  { bits[6] = turn; }
     inline void set_negative(bool turn)  { bits[7] = turn; } 
 
-    MOS_NODISCARD
+    NODISCARD
     constexpr uint8_t get_value() const { return static_cast<uint8_t>(bits.to_ulong()); }
     
     inline void operator=(uint8_t val)  { bits = val;  }
@@ -412,25 +402,21 @@ uint8_t CPU::pop_stack()
 
 // --------------------------------------------------------------------------- //
 // --- Addressing Modes --- //
-MOS_NODISCARD
 uint16_t CPU::implicit()
 { 
     return 0;
 }
 
-MOS_NODISCARD
 uint16_t CPU::accumulator()
 {
     return A;
 }
 
-MOS_NODISCARD
 uint16_t CPU::immediate()
 {
     return PC++;
 }
 
-MOS_NODISCARD
 uint16_t CPU::zero_page()
 {
     uint8_t addr = bus->cpu_read(PC);
@@ -439,19 +425,16 @@ uint16_t CPU::zero_page()
     return addr;
 }
 
-MOS_NODISCARD
 uint16_t CPU::zero_page_x()
 {
     return (zero_page() + X) % 256;
 }
 
-MOS_NODISCARD
 uint16_t CPU::zero_page_y()
 {
     return (zero_page() + Y) % 256;
 }
 
-MOS_NODISCARD
 uint16_t CPU::relative()
 {
     uint16_t offset = bus->cpu_read(PC);
@@ -463,7 +446,6 @@ uint16_t CPU::relative()
     return PC + offset;
 }
 
-MOS_NODISCARD
 uint16_t CPU::absolute()
 {
     uint8_t low = bus->cpu_read(PC);
@@ -476,19 +458,16 @@ uint16_t CPU::absolute()
     return (high << 8) | low;
 }
 
-MOS_NODISCARD
 uint16_t CPU::absolute_x()
 {
     return absolute() + X;
 }
 
-MOS_NODISCARD
 uint16_t CPU::absolute_y()
 {
     return absolute() + Y;
 }
 
-MOS_NODISCARD
 uint16_t CPU::indirect()
 {
     uint16_t temp;
@@ -515,7 +494,7 @@ uint16_t CPU::indirect()
     return low + 0x100 * high;
 }
 
-MOS_NODISCARD
+
 uint16_t CPU::indexed_indirect()
 {
     uint8_t temp = bus->cpu_read(PC);
@@ -527,7 +506,7 @@ uint16_t CPU::indexed_indirect()
     return (high << 8) | low;
 }
 
-MOS_NODISCARD
+
 uint16_t CPU::indirect_indexed()
 {
     uint8_t temp = bus->cpu_read(PC);
@@ -544,7 +523,6 @@ uint16_t CPU::indirect_indexed()
 // --- Load Operations ---
 // Loads a byte of memory into the accumulator setting 
 // the zero and negative flags as appropriate.
-MOS_NODISCARD
 uint8_t CPU::LDA(uint16_t addr) 
 {
     A = bus->cpu_read(addr);
@@ -565,7 +543,6 @@ uint8_t CPU::LDA(uint16_t addr)
 
 // Loads a byte of memory into the X register setting 
 // the zero and negative flags as appropriate.
-MOS_NODISCARD
 uint8_t CPU::LDX(uint16_t addr) 
 {
     X = bus->cpu_read(addr);
@@ -582,7 +559,6 @@ uint8_t CPU::LDX(uint16_t addr)
 
 // Loads a byte of memory into the Y register setting 
 // the zero and negative flags as appropriate.
-MOS_NODISCARD
 uint8_t CPU::LDY(uint16_t addr) 
 {
     Y = bus->cpu_read(addr);
@@ -599,7 +575,6 @@ uint8_t CPU::LDY(uint16_t addr)
 
 // --- Store Operations ---
 // Stores the contents of the accumulator into memory.
-MOS_NODISCARD
 uint8_t CPU::STA(uint16_t addr) 
 {
     bus->cpu_write(addr, A);
@@ -608,7 +583,6 @@ uint8_t CPU::STA(uint16_t addr)
 }
 
 // Stores the contents of the X register into memory.
-MOS_NODISCARD
 uint8_t CPU::STX(uint16_t addr) 
 {
     bus->cpu_write(addr, X);
@@ -617,7 +591,6 @@ uint8_t CPU::STX(uint16_t addr)
 } 
 
 // Stores the contents of the Y register into memory.
-MOS_NODISCARD
 uint8_t CPU::STY(uint16_t addr) 
 {
     bus->cpu_write(addr, Y);
@@ -629,8 +602,7 @@ uint8_t CPU::STY(uint16_t addr)
 // Copies the current contents of the accumulator into 
 // the X register and sets the zero and negative flags 
 // as appropriate.
-MOS_NODISCARD
-uint8_t CPU::TAX(MOS_UNUSED uint16_t addr) 
+uint8_t CPU::TAX(uint16_t addr) 
 {
     X = A;
 
@@ -643,8 +615,7 @@ uint8_t CPU::TAX(MOS_UNUSED uint16_t addr)
 // Copies the current contents of the accumulator into 
 // the Y register and sets the zero and negative flags 
 // as appropriate.
-MOS_NODISCARD
-uint8_t CPU::TAY(MOS_UNUSED uint16_t addr) 
+uint8_t CPU::TAY(uint16_t addr) 
 {
     Y = A;
 
@@ -657,8 +628,7 @@ uint8_t CPU::TAY(MOS_UNUSED uint16_t addr)
 // Copies the current contents of the X register into 
 // the accumulator and sets the zero and negative flags 
 // as appropriate.
-MOS_NODISCARD
-uint8_t CPU::TXA(MOS_UNUSED uint16_t addr) 
+uint8_t CPU::TXA(uint16_t addr) 
 {
     A = X;
 
@@ -671,8 +641,7 @@ uint8_t CPU::TXA(MOS_UNUSED uint16_t addr)
 // Copies the current contents of the Y register into 
 // the accumulator and sets the zero and negative flags 
 // as appropriate.
-MOS_NODISCARD
-uint8_t CPU::TYA(MOS_UNUSED uint16_t addr) 
+uint8_t CPU::TYA(uint16_t addr) 
 {
     A = Y;
 
@@ -686,8 +655,7 @@ uint8_t CPU::TYA(MOS_UNUSED uint16_t addr)
 // Copies the current contents of the stack register into 
 // the X register and sets the zero and negative flags as 
 // appropriate.
-MOS_NODISCARD
-uint8_t CPU::TSX(MOS_UNUSED uint16_t addr) 
+uint8_t CPU::TSX(uint16_t addr) 
 {
     X = SP;
 
@@ -698,8 +666,7 @@ uint8_t CPU::TSX(MOS_UNUSED uint16_t addr)
 }
 
 // Copies the current contents of the X register into the stack register.
-MOS_NODISCARD
-uint8_t CPU::TXS(MOS_UNUSED uint16_t addr) 
+uint8_t CPU::TXS(uint16_t addr) 
 {
     SP = X;
 
@@ -707,8 +674,7 @@ uint8_t CPU::TXS(MOS_UNUSED uint16_t addr)
 } 
 
 // Pushes a copy of the accumulator on to the stack.
-MOS_NODISCARD
-uint8_t CPU::PHA(MOS_UNUSED uint16_t addr) 
+uint8_t CPU::PHA(uint16_t addr) 
 {
     push_stack(A);
 
@@ -716,8 +682,7 @@ uint8_t CPU::PHA(MOS_UNUSED uint16_t addr)
 }
 
 // Pushes a copy of the status flags on to the stack.
-MOS_NODISCARD
-uint8_t CPU::PHP(MOS_UNUSED uint16_t addr) 
+uint8_t CPU::PHP(uint16_t addr) 
 {
     push_stack(P->get_value());
 
@@ -726,8 +691,7 @@ uint8_t CPU::PHP(MOS_UNUSED uint16_t addr)
 
 // Pulls an 8 bit value from the stack and into the accumulator. 
 // The zero and negative flags are set as appropriate.
-MOS_NODISCARD
-uint8_t CPU::PLA(MOS_UNUSED uint16_t addr) 
+uint8_t CPU::PLA(uint16_t addr) 
 {
     A = pop_stack();
 
@@ -739,8 +703,7 @@ uint8_t CPU::PLA(MOS_UNUSED uint16_t addr)
 
 // Pulls an 8 bit value from the stack and into the processor flags. 
 // The flags will take on new states as determined by the value pulled.
-MOS_NODISCARD
-uint8_t CPU::PLP(MOS_UNUSED uint16_t addr) 
+uint8_t CPU::PLP(uint16_t addr) 
 {
     *P = pop_stack();
 
@@ -750,7 +713,6 @@ uint8_t CPU::PLP(MOS_UNUSED uint16_t addr)
 // --- Logical ---
 // A logical AND is performed, bit by bit, on the accumulator 
 // contents using the contents of a byte of memory.
-MOS_NODISCARD
 uint8_t CPU::AND(uint16_t addr) 
 {
     uint8_t src = bus->cpu_read(addr);
@@ -772,7 +734,6 @@ uint8_t CPU::AND(uint16_t addr)
 
 // An exclusive OR is performed, bit by bit, on the accumulator 
 // contents using the contents of a byte of memory.
-MOS_NODISCARD
 uint8_t CPU::EOR(uint16_t addr) 
 {
     uint8_t src = bus->cpu_read(addr);
@@ -794,7 +755,6 @@ uint8_t CPU::EOR(uint16_t addr)
 
 // An inclusive OR is performed, bit by bit, on the accumulator 
 // contents using the contents of a byte of memory.
-MOS_NODISCARD
 uint8_t CPU::ORA(uint16_t addr) 
 {
     uint8_t src = bus->cpu_read(addr);
@@ -818,7 +778,6 @@ uint8_t CPU::ORA(uint16_t addr)
 // target memory location. The mask pattern in A is ANDed with the value 
 // in memory to set or clear the zero flag, but the result is not kept. 
 // Bits 7 and 6 of the value from memory are copied into the N and V flags.
-MOS_NODISCARD
 uint8_t CPU::BIT(uint16_t addr) 
 {
     uint8_t src = bus->cpu_read(addr);
@@ -834,7 +793,6 @@ uint8_t CPU::BIT(uint16_t addr)
 // This instruction adds the contents of a memory location to the 
 // accumulator together with the carry bit. If overflow occurs the 
 // carry bit is set, this enables multiple byte addition to be performed.
-MOS_NODISCARD
 uint8_t CPU::ADC(uint16_t addr) 
 {
     uint16_t src  = bus->cpu_read(addr);
@@ -865,7 +823,6 @@ uint8_t CPU::ADC(uint16_t addr)
 // This is literally the inverse of ADC, another common way to to do this
 // is by doing something like this:
 // return ADC(~addr->content);
-MOS_NODISCARD
 uint8_t CPU::SBC(uint16_t addr) 
 {
     uint16_t src   = bus->cpu_read(addr);
@@ -892,7 +849,6 @@ uint8_t CPU::SBC(uint16_t addr)
 
 // This instruction compares the contents of the accumulator with another 
 // memory held value and sets the zero and carry flags as appropriate.
-MOS_NODISCARD
 uint8_t CPU::CMP(uint16_t addr) 
 {
     uint16_t src  = bus->cpu_read(addr);
@@ -915,7 +871,6 @@ uint8_t CPU::CMP(uint16_t addr)
 
 // This instruction compares the contents of the X register with another 
 // memory held value and sets the zero and carry flags as appropriate.
-MOS_NODISCARD
 uint8_t CPU::CPX(uint16_t addr) 
 {
     uint16_t src  = bus->cpu_read(addr);
@@ -930,7 +885,6 @@ uint8_t CPU::CPX(uint16_t addr)
 
 // This instruction compares the contents of the Y register with another 
 // memory held value and sets the zero and carry flags as appropriate.
-MOS_NODISCARD
 uint8_t CPU::CPY(uint16_t addr) 
 {
     uint16_t src  = bus->cpu_read(addr);
@@ -946,7 +900,6 @@ uint8_t CPU::CPY(uint16_t addr)
 // --- Increments and Decrements ---
 // Adds one to the value held at a specified memory location 
 // setting the zero and negative flags as appropriate.
-MOS_NODISCARD
 uint8_t CPU::INC(uint16_t addr) 
 {
     uint8_t src = bus->cpu_read(addr);
@@ -962,8 +915,7 @@ uint8_t CPU::INC(uint16_t addr)
 
 // Adds one to the X register setting the zero and negative 
 // flags as appropriate.
-MOS_NODISCARD
-uint8_t CPU::INX(MOS_UNUSED uint16_t addr) 
+uint8_t CPU::INX(uint16_t addr) 
 {
     ++X;
 
@@ -975,8 +927,7 @@ uint8_t CPU::INX(MOS_UNUSED uint16_t addr)
 
 // Adds one to the Y register setting the zero and negative 
 // flags as appropriate.
-MOS_NODISCARD
-uint8_t CPU::INY(MOS_UNUSED uint16_t addr) 
+uint8_t CPU::INY(uint16_t addr) 
 {
     ++Y;
 
@@ -989,7 +940,6 @@ uint8_t CPU::INY(MOS_UNUSED uint16_t addr)
 // Subtracts one from the value held at a specified memory 
 // location setting the zero and negative flags as 
 // appropriate.
-MOS_NODISCARD
 uint8_t CPU::DEC(uint16_t addr) 
 {   
     uint8_t src = bus->cpu_read(addr);
@@ -1005,8 +955,7 @@ uint8_t CPU::DEC(uint16_t addr)
 
 // Subtracts one from the X register setting the zero and 
 // negative flags as appropriate.
-MOS_NODISCARD
-uint8_t CPU::DEX(MOS_UNUSED uint16_t addr) 
+uint8_t CPU::DEX(uint16_t addr) 
 {
     --X;
 
@@ -1018,8 +967,7 @@ uint8_t CPU::DEX(MOS_UNUSED uint16_t addr)
 
 // Subtracts one from the Y register setting the zero and 
 // negative flags as appropriate.
-MOS_NODISCARD
-uint8_t CPU::DEY(MOS_UNUSED uint16_t addr)
+uint8_t CPU::DEY(uint16_t addr)
 {
     --Y;
 
@@ -1036,7 +984,6 @@ uint8_t CPU::DEY(MOS_UNUSED uint16_t addr)
 // is to multiply the memory contents by 2 
 // (ignoring 2's complement considerations), setting the carry
 // if the result will not fit in 8 bits.
-MOS_NODISCARD
 uint8_t CPU::ASL(uint16_t addr) 
 {
     uint16_t src;
@@ -1063,7 +1010,6 @@ uint8_t CPU::ASL(uint16_t addr)
 // Each of the bits in A or M is shift one place to the right. 
 // The bit that was in bit 0 is shifted into the carry flag. 
 // Bit 7 is set to zero.
-MOS_NODISCARD
 uint8_t CPU::LSR(uint16_t addr) 
 {
     uint16_t src;
@@ -1091,7 +1037,6 @@ uint8_t CPU::LSR(uint16_t addr)
 // Move each of the bits in either A or M one place to the left. 
 // Bit 0 is filled with the current value of the carry flag 
 // whilst the old bit 7 becomes the new carry flag value.
-MOS_NODISCARD
 uint8_t CPU::ROL(uint16_t addr) 
 {
     uint16_t src;
@@ -1118,7 +1063,6 @@ uint8_t CPU::ROL(uint16_t addr)
 // Move each of the bits in either A or M one place to the right. 
 // Bit 7 is filled with the current value of the carry flag whilst 
 // the old bit 0 becomes the new carry flag value.
-MOS_NODISCARD
 uint8_t CPU::ROR(uint16_t addr) 
 {
     uint16_t src;
@@ -1147,7 +1091,6 @@ uint8_t CPU::ROR(uint16_t addr)
 
 // --- Jumps and Calls ---
 // Sets the program counter to the address specified by the operand.
-MOS_NODISCARD
 uint8_t CPU::JMP(uint16_t addr) 
 {
     PC = addr;
@@ -1158,8 +1101,7 @@ uint8_t CPU::JMP(uint16_t addr)
 // The JSR instruction pushes the address (minus one) of the return 
 // point on to the stack and then sets the program counter to the 
 // target memory address.
-MOS_NODISCARD
-uint8_t CPU::JSR(MOS_UNUSED uint16_t addr) 
+uint8_t CPU::JSR(uint16_t addr) 
 {
     --PC;
 
@@ -1174,8 +1116,7 @@ uint8_t CPU::JSR(MOS_UNUSED uint16_t addr)
 // The RTS instruction is used at the end of a subroutine to return 
 // to the calling routine. It pulls the program counter (minus one) 
 // from the stack.
-MOS_NODISCARD
-uint8_t CPU::RTS(MOS_UNUSED uint16_t addr) 
+uint8_t CPU::RTS(uint16_t addr) 
 {
     PC = pop_stack();
     PC |= pop_stack() << 8;
@@ -1188,7 +1129,6 @@ uint8_t CPU::RTS(MOS_UNUSED uint16_t addr)
 // --- Branches ---
 // If the carry flag is clear then add the relative displacement to 
 // the program counter to cause a branch to a new location.
-MOS_NODISCARD
 uint8_t CPU::BCC(uint16_t addr) 
 {
     uint8_t cycles = 0;
@@ -1205,7 +1145,6 @@ uint8_t CPU::BCC(uint16_t addr)
 
 // If the carry flag is set then add the relative displacement to 
 // the program counter to cause a branch to a new location.
-MOS_NODISCARD
 uint8_t CPU::BCS(uint16_t addr) 
 {
     uint8_t cycles = 0;
@@ -1222,7 +1161,6 @@ uint8_t CPU::BCS(uint16_t addr)
 
 // If the zero flag is set then add the relative displacement to 
 // the program counter to cause a branch to a new location.
-MOS_NODISCARD
 uint8_t CPU::BEQ(uint16_t addr) 
 {
     uint8_t cycles = 0;
@@ -1239,7 +1177,6 @@ uint8_t CPU::BEQ(uint16_t addr)
 
 // If the negative flag is set then add the relative displacement 
 // to the program counter to cause a branch to a new location.
-MOS_NODISCARD
 uint8_t CPU::BMI(uint16_t addr) 
 {
     uint8_t cycles = 0;
@@ -1256,7 +1193,6 @@ uint8_t CPU::BMI(uint16_t addr)
 
 // If the zero flag is clear then add the relative displacement to 
 // the program counter to cause a branch to a new location.
-MOS_NODISCARD
 uint8_t CPU::BNE(uint16_t addr) 
 {
     uint8_t cycles = 0;
@@ -1273,7 +1209,6 @@ uint8_t CPU::BNE(uint16_t addr)
 
 // If the negative flag is clear then add the relative displacement 
 // to the program counter to cause a branch to a new location.
-MOS_NODISCARD
 uint8_t CPU::BPL(uint16_t addr) 
 {
     uint8_t cycles = 0;
@@ -1290,7 +1225,6 @@ uint8_t CPU::BPL(uint16_t addr)
 
 // If the overflow flag is clear then add the relative displacement 
 // to the program counter to cause a branch to a new location.
-MOS_NODISCARD
 uint8_t CPU::BVC(uint16_t addr) 
 {
     uint8_t cycles = 0;
@@ -1307,7 +1241,6 @@ uint8_t CPU::BVC(uint16_t addr)
 
 // If the overflow flag is set then add the relative displacement 
 // to the program counter to cause a branch to a new location.
-MOS_NODISCARD
 uint8_t CPU::BVS(uint16_t addr) 
 {
     uint8_t cycles = 0;
@@ -1324,8 +1257,7 @@ uint8_t CPU::BVS(uint16_t addr)
 
 // --- Status Flag Changes ---
 // Set the carry flag to zero.
-MOS_NODISCARD
-uint8_t CPU::CLC(MOS_UNUSED uint16_t addr) 
+uint8_t CPU::CLC(uint16_t addr) 
 {
     P->set_carry(0);
 
@@ -1333,8 +1265,7 @@ uint8_t CPU::CLC(MOS_UNUSED uint16_t addr)
 } 
 
 // Sets the decimal mode flag to zero.
-MOS_NODISCARD
-uint8_t CPU::CLD(MOS_UNUSED uint16_t addr) 
+uint8_t CPU::CLD(uint16_t addr) 
 {
     P->set_decimal(0);
     
@@ -1343,8 +1274,7 @@ uint8_t CPU::CLD(MOS_UNUSED uint16_t addr)
 
 // Clears the interrupt disable flag allowing normal interrupt 
 // requests to be serviced.
-MOS_NODISCARD
-uint8_t CPU::CLI(MOS_UNUSED uint16_t addr) 
+uint8_t CPU::CLI(uint16_t addr) 
 {
     P->set_interrupt(0);
     
@@ -1352,8 +1282,7 @@ uint8_t CPU::CLI(MOS_UNUSED uint16_t addr)
 }
 
 // Clears the overflow flag.
-MOS_NODISCARD
-uint8_t CPU::CLV(MOS_UNUSED uint16_t addr) 
+uint8_t CPU::CLV(uint16_t addr) 
 {
     P->set_overflow(0);
     
@@ -1361,8 +1290,7 @@ uint8_t CPU::CLV(MOS_UNUSED uint16_t addr)
 } 
 
 // Set the carry flag to one.
-MOS_NODISCARD
-uint8_t CPU::SEC(MOS_UNUSED uint16_t addr) 
+uint8_t CPU::SEC(uint16_t addr) 
 {
     P->set_carry(1);
 
@@ -1370,8 +1298,7 @@ uint8_t CPU::SEC(MOS_UNUSED uint16_t addr)
 } 
 
 // Set the decimal mode flag to one.
-MOS_NODISCARD
-uint8_t CPU::SED(MOS_UNUSED uint16_t addr) 
+uint8_t CPU::SED(uint16_t addr) 
 {
     P->set_decimal(1);
     
@@ -1379,8 +1306,7 @@ uint8_t CPU::SED(MOS_UNUSED uint16_t addr)
 }
 
 // Set the interrupt disable flag to one.
-MOS_NODISCARD
-uint8_t CPU::SEI(MOS_UNUSED uint16_t addr) 
+uint8_t CPU::SEI(uint16_t addr) 
 {
     P->set_interrupt(1);
     
@@ -1392,8 +1318,7 @@ uint8_t CPU::SEI(MOS_UNUSED uint16_t addr)
 // The program counter and processor status are pushed on the stack 
 // then the IRQ interrupt vector at $FFFE/F is loaded into the PC 
 // and the break flag in the status set to one.
-MOS_NODISCARD
-uint8_t CPU::BRK(MOS_UNUSED uint16_t addr) 
+uint8_t CPU::BRK(uint16_t addr) 
 {
     ++PC;
 
@@ -1414,8 +1339,7 @@ uint8_t CPU::BRK(MOS_UNUSED uint16_t addr)
 // The NOP instruction causes no changes to the processor other than 
 // the normal incrementing of the program counter to the next 
 // instruction.
-MOS_NODISCARD
-uint8_t CPU::NOP(MOS_UNUSED uint16_t addr) 
+uint8_t CPU::NOP(uint16_t addr) 
 {
     return 0;
 }
@@ -1423,8 +1347,7 @@ uint8_t CPU::NOP(MOS_UNUSED uint16_t addr)
 // The RTI instruction is used at the end of an interrupt processing 
 // routine. It pulls the processor flags from the stack followed by 
 // the program counter.
-MOS_NODISCARD
-uint8_t CPU::RTI(MOS_UNUSED uint16_t addr) 
+uint8_t CPU::RTI(uint16_t addr) 
 {
     *P = pop_stack();
     *P &= ~P->BREAK;
